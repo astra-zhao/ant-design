@@ -1,30 +1,49 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { changeConfirmLocale } from '../modal/locale';
+import * as React from 'react';
+import * as PropTypes from 'prop-types';
+import { ModalLocale, changeConfirmLocale } from '../modal/locale';
+import warning from '../_util/warning';
+
+export const ANT_MARK = 'internalMark';
+
+export interface Locale {
+  locale: string;
+  Pagination?: Object;
+  DatePicker?: Object;
+  TimePicker?: Object;
+  Calendar?: Object;
+  Table?: Object;
+  Modal?: ModalLocale;
+  Popconfirm?: Object;
+  Transfer?: Object;
+  Select?: Object;
+  Upload?: Object;
+}
 
 export interface LocaleProviderProps {
-  locale: {
-    Pagination?: Object,
-    DatePicker?: Object,
-    TimePicker?: Object,
-    Calendar?: Object,
-    Table?: Object,
-    Modal?: Object,
-    Popconfirm?: Object,
-    Transfer?: Object,
-    Select?: Object,
-  };
-  children?: React.ReactElement<any>;
+  locale: Locale;
+  children?: React.ReactNode;
+  _ANT_MARK__?: string;
 }
 
 export default class LocaleProvider extends React.Component<LocaleProviderProps, any> {
-  static propTypes = {
-    locale: PropTypes.object,
+  static defaultProps = {
+    locale: {},
   };
 
   static childContextTypes = {
     antLocale: PropTypes.object,
   };
+
+  constructor(props: LocaleProviderProps) {
+    super(props);
+    changeConfirmLocale(props.locale && props.locale.Modal);
+
+    warning(
+      props._ANT_MARK__ === ANT_MARK,
+      'LocaleProvider',
+      '`LocaleProvider` is deprecated. Please use `locale` with `ConfigProvider` instead: http://u.ant.design/locale',
+    );
+  }
 
   getChildContext() {
     return {
@@ -35,20 +54,18 @@ export default class LocaleProvider extends React.Component<LocaleProviderProps,
     };
   }
 
-  componentWillMount() {
-    this.componentDidUpdate();
-  }
-
-  componentDidUpdate() {
+  componentDidUpdate(prevProps: LocaleProviderProps) {
     const { locale } = this.props;
-    changeConfirmLocale(locale && locale.Modal);
+    if (prevProps.locale !== locale) {
+      changeConfirmLocale(locale && locale.Modal);
+    }
   }
 
-  componentWillUnMount() {
+  componentWillUnmount() {
     changeConfirmLocale();
   }
 
   render() {
-    return React.Children.only(this.props.children);
+    return this.props.children;
   }
 }

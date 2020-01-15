@@ -12,11 +12,10 @@ title:
 ## en-US
 
 Demonstration of [Lookup Patterns: Uncertain Category](https://ant.design/docs/spec/reaction#Lookup-Patterns).
-Basic Usage, set datasource of autocomplete with `dataSource` property.
 
-````jsx
-import { Icon, Button, Input, AutoComplete } from 'antd';
-const Option = AutoComplete.Option;
+```jsx
+import { Button, Input, AutoComplete } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 
 function onSelect(value) {
   console.log('onSelect', value);
@@ -27,62 +26,67 @@ function getRandomInt(max, min = 0) {
 }
 
 function searchResult(query) {
-  return (new Array(getRandomInt(5))).join('.').split('.')
-    .map((item, idx) => ({
-      query,
-      category: `${query}${idx}`,
-      count: getRandomInt(200, 100),
-    }));
-}
-
-function renderOption(item) {
-  return (
-    <Option key={item.category} text={item.category}>
-      {item.query} 在
-      <a
-        href={`https://s.taobao.com/search?q=${item.query}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {item.category}
-      </a>
-      区块中
-      <span className="global-search-item-count">约 {item.count} 个结果</span>
-    </Option>
-  );
+  return new Array(getRandomInt(5))
+    .join('.')
+    .split('.')
+    .map((item, idx) => {
+      const category = `${query}${idx}`;
+      return {
+        value: category,
+        label: (
+          <div className="global-search-item">
+            <span className="global-search-item-desc">
+              Found {query} on{' '}
+              <a
+                href={`https://s.taobao.com/search?q=${query}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {category}
+              </a>
+            </span>
+            <span className="global-search-item-count">{getRandomInt(200, 100)} results</span>
+          </div>
+        ),
+      };
+    });
 }
 
 class Complete extends React.Component {
   state = {
-    dataSource: [],
-  }
+    options: [],
+  };
 
-  handleSearch = (value) => {
+  handleSearch = value => {
     this.setState({
-      dataSource: value ? searchResult(value) : [],
+      options: value ? searchResult(value) : [],
     });
-  }
+  };
 
   render() {
-    const { dataSource } = this.state;
+    const { options } = this.state;
     return (
       <div className="global-search-wrapper" style={{ width: 300 }}>
         <AutoComplete
           className="global-search"
-          size="large"
           style={{ width: '100%' }}
-          dataSource={dataSource.map(renderOption)}
+          options={options}
           onSelect={onSelect}
           onSearch={this.handleSearch}
-          placeholder="input here"
-          optionLabelProp="text"
         >
           <Input
-            suffix={(
-              <Button className="search-btn" size="large" type="primary">
-                <Icon type="search" />
+            suffix={
+              <Button
+                className="search-btn"
+                style={{ marginRight: -12 }}
+                size="large"
+                type="primary"
+              >
+                <SearchOutlined />
               </Button>
-            )}
+            }
+            size="large"
+            placeholder="input here"
           />
         </AutoComplete>
       </div>
@@ -91,9 +95,9 @@ class Complete extends React.Component {
 }
 
 ReactDOM.render(<Complete />, mountNode);
-````
+```
 
-````css
+```css
 .global-search-wrapper {
   padding-right: 50px;
 }
@@ -110,17 +114,22 @@ ReactDOM.render(<Complete />, mountNode);
   padding-right: 62px;
 }
 
-.global-search.ant-select-auto-complete .ant-input-affix-wrapper .ant-input-suffix {
-  right: 0;
-}
-
 .global-search.ant-select-auto-complete .ant-input-affix-wrapper .ant-input-suffix button {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
 
-.global-search-item-count {
-  position: absolute;
-  right: 16px;
+.global-search-item {
+  display: flex;
 }
-````
+
+.global-search-item-desc {
+  flex: auto;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.global-search-item-count {
+  flex: none;
+}
+```

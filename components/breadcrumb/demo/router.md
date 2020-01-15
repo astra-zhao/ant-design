@@ -1,20 +1,21 @@
 ---
 order: 2
 iframe: 200
+reactRouter: react-router
 title:
-  zh-CN: 路由
+  zh-CN: react-router
   en-US: React Router Integration
 ---
 
 ## zh-CN
 
-和 `react-router@2+` 进行结合使用。
+和 `react-router@2` `react-router@3` 进行结合使用。
 
 ## en-US
 
-Used together with `react-router@2+`.
+Used together with `react-router@2` `react-router@3`.
 
-````jsx
+```jsx
 import { Router, Route, Link, hashHistory } from 'react-router';
 import { Breadcrumb, Alert } from 'antd';
 
@@ -50,11 +51,12 @@ ReactDOM.render(
         </Route>
       </Route>
     </Route>
-  </Router>
-, mountNode);
-````
+  </Router>,
+  mountNode,
+);
+```
 
-````css
+```css
 .demo {
   margin: 16px;
 }
@@ -71,4 +73,10 @@ ReactDOM.render(
 .app-list {
   margin-top: 16px;
 }
-````
+```
+
+<style>
+  [data-theme="dark"] .demo-nav {
+    background: #141414;
+  }
+</style>

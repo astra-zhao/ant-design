@@ -3,161 +3,141 @@ order: 3
 title: 项目实战
 ---
 
-[dva](https://github.com/dvajs/dva) 是一个基于 react 和 redux 的轻量应用框架，概念来自 elm，支持 side effects、热替换、动态加载、react-native、SSR 等，已在生产环境广泛应用。
+在真实项目开发中，你可能会需要 Redux 或者 MobX 这样的数据流方案，Ant Design React 作为一个 UI 库，可以和任何 React 生态圈内的数据流方案以及应用框架搭配使用。我们基于 Redux 推出了自己的最佳实践 dva，以及可插拔的企业级应用框架 umi，推荐你在项目中使用。
 
-本文会引导你使用 dva 和 antd 从 0 开始创建一个简单应用。
+[dva](http://dvajs.com/) 是一个基于 Redux 的 轻量级数据流方案，概念来自 elm，支持 side effects、热替换、动态加载、react-native、SSR 等，已在生产环境广泛应用。
 
-会包含以下内容：
+[umi](http://umijs.org/) 则是一个可插拔的企业级 react 应用框架。umi 以路由为基础的，支持[类 next.js 的约定式路由](https://umijs.org/zh/guide/router.html)，以及各种进阶的路由功能，并以此进行功能扩展，比如[支持路由级的按需加载](https://umijs.org/zh/plugin/umi-plugin-react.html#dynamicimport)。然后配以完善的[插件体系](https://umijs.org/zh/plugin/)，覆盖从源码到构建产物的每个生命周期，支持各种功能扩展和业务需求，同时提供 [Umi UI](https://umijs.org/zh/guide/umi-ui.html) 通过可视化辅助编程（VAP）提高开发体验和研发效率。
 
----
+> 你可能也会对 [Ant Design Pro](https://pro.ant.design/) 感兴趣，这是一个基于 umi、dva 和 ant design 的开箱即用的中台前端/设计解决方案。
 
-## 安装 dva-cli
+本文会引导你使用 Umi UI、dva 和 antd 从 0 开始创建一个简单应用。
 
-通过 npm 安装 dva-cli 并确保版本是 `0.7.0` 或以上。
+## 安装 Umi UI
+
+推荐使用 yarn 安装 Umi UI，执行以下命令。
+
+> 如果你使用 npm，可执行 `npm install umi -g`，效果一致。
 
 ```bash
-$ npm install dva-cli -g
-$ dva -v
-0.7.0
+$ yarn global add umi
+$ umi -v
+2.10.4
 ```
+
+确保 umi 版本在 2.10.0 以上。
 
 ## 创建新应用
 
-安装完 dva-cli 之后，就可以在命令行里访问到 `dva` 命令（[不能访问？](http://stackoverflow.com/questions/15054388/global-node-modules-not-installing-correctly-command-not-found)）。现在，你可以通过 `dva new` 创建新应用。
+启动 Umi UI，
 
 ```bash
-$ dva new dva-quickstart
+$ umi ui
+
+🚀 Starting Umi UI using umi@2.10.4...
+🧨  Ready on http://localhost:3000/
 ```
 
-这会创建 `dva-quickstart` 目录，包含项目初始化目录和文件，并提供开发服务器、构建脚本、数据 mock 服务、代理服务器等功能。
+启动后， Umi UI 会自动打开浏览器，点击 `创建项目`，选择路径并输入 `应用名`，如下图：
 
-然后我们 `cd` 进入 `dva-quickstart` 目录，并启动开发服务器：
+<img src="https://gw.alipayobjects.com/zos/antfincdn/1%24I%24KuXNop/60f0bae2-d803-4339-bc09-8df618ebd916.png" width="718" />
 
-```bash
-$ cd dva-quickstart
-$ npm start
-```
+点击 `下一步`，选择 `基础模板`，技术栈选上 `antd` 和 `dva`，然后点击 `完成`。
 
-几秒钟后，你会看到以下输出：
+<img src="https://gw.alipayobjects.com/zos/antfincdn/9gmy78Evsp/7978f0b2-8b8c-44fa-84df-bfe9dc6065f4.png" width="718" />
 
-```bash
-Compiled successfully!
+进入到项目创建流程，等待几分钟，
 
-The app is running at:
+<img src="https://gw.alipayobjects.com/zos/antfincdn/cT35jkUl4j/8381545c-7f89-48ef-9e93-8adcdd6a3bb4.png" width="718" />
 
-  http://localhost:8000/
+创建完成后，进入到 `总览`，点击快捷入口 `本地启动`，
 
-Note that the development build is not optimized.
-To create a production build, use npm run build.
-```
+<img src="https://gw.alipayobjects.com/zos/antfincdn/vGsor%24iku8/531acbd7-f48e-4246-bc77-152117ef56db.png" width="718" />
 
-在浏览器里打开 http://localhost:8000 ，你会看到 dva 的欢迎界面。
+在任务页中，点击 `启动`，
+
+<img src="https://gw.alipayobjects.com/zos/antfincdn/RRYNqxBs9g/72ec5739-ac1f-40a6-8f7a-204c7faba0a7.png" width="718" />
+
+按提示，点击 [http://localhost:8000](http://localhost:8000)，你会看到 umi 的欢迎界面。
+
+<img src="https://gw.alipayobjects.com/zos/antfincdn/2Bm%24zoeBpz/ba708131-c7ac-41f0-92a0-c86007291b6a.png" width="718" />
 
 ## 使用 antd
 
-通过 npm 安装 `antd` 和 `babel-plugin-import` 。`babel-plugin-import` 是用来按需加载 antd 的脚本和样式的，详见 [repo](https://github.com/ant-design/babel-plugin-import) 。
+前面选择 antd 之后，会自动处理 antd 的依赖以及按需加载。你可以检查 `配置`，确保 antd 已开启。
 
-```bash
-$ npm install antd babel-plugin-import --save
-```
+<img src="https://gw.alipayobjects.com/zos/antfincdn/0EFiWipONe/7aea9287-09ff-4396-bb20-d8da28483c2c.png" width="718" />
 
-编辑 `.roadhogrc`，使 `babel-plugin-import` 插件生效。
+> 而如果要使用固定版本的 antd，你可以在项目里安装额外的 antd 依赖，package.json 里声明的 antd 依赖会被优先使用。
 
-```diff
-  "extraBabelPlugins": [
--    "transform-runtime"
-+    "transform-runtime",
-+    ["import", { "libraryName": "antd", "style": "css" }]
-  ],
-```
-
-> 注：dva-cli 基于 roadhog 实现 build 和 server，更多 `.roadhogrc` 的配置详见 [roadhog#配置](https://github.com/sorrycc/roadhog#配置)
-
-## 定义路由
+## 新建路由
 
 我们要写个应用来先显示产品列表。首先第一步是创建路由，路由可以想象成是组成应用的不同页面。
 
-新建 route component `routes/Products.js`，内容如下：
+然后通过命令创建 `/products` 路由，
 
-```javascript
-import React from 'react';
+```bash
+$ umi g page products
 
-const Products = (props) => (
-  <h2>List of Products</h2>
-);
-
-export default Products;
+   create src/pages/products.js
+   create src/pages/products.css
+✔  success
 ```
 
-添加路由信息到路由表，编辑 `router.js` :
-
-```diff
-+ import Products from './routes/Products';
-...
-+ <Route path="/products" component={Products} />
-```
-
-然后在浏览器里打开 http://localhost:8000/#/products ，你应该能看到前面定义的 `<h2>` 标签。
+然后在浏览器里打开 [http://localhost:8000/products](http://localhost:8000/products)，你应该能看到对应的页面。
 
 ## 编写 UI Component
 
-随着应用的发展，你会需要在多个页面分享 UI 元素 (或在一个页面使用多次)，在 dva 里你可以把这部分抽成 component 。
+随着应用的发展，你会需要在多个页面分享 UI 元素 (或在一个页面使用多次)，在 umi 里你可以把这部分抽成 component 。
 
 我们来编写一个 `ProductList` component，这样就能在不同的地方显示产品列表了。
 
-新建 `components/ProductList.js` 文件：
+点击 `在编辑器中打开`，
 
-```javascript
-import React from 'react';
-import PropTypes from 'prop-types';
+<img src="https://gw.alipayobjects.com/zos/antfincdn/ffPr49NZ%26p/64fa0ad5-9a7a-43c0-b308-ffe28e680a8b.png" width="718" />
+
+然后新建 `src/components/ProductList.js` 文件：
+
+```js
 import { Table, Popconfirm, Button } from 'antd';
 
 const ProductList = ({ onDelete, products }) => {
-  const columns = [{
-    title: 'Name',
-    dataIndex: 'name',
-  }, {
-    title: 'Actions',
-    render: (text, record) => {
-      return (
-        <Popconfirm title="Delete?" onConfirm={() => onDelete(record.id)}>
-          <Button>Delete</Button>
-        </Popconfirm>
-      );
+  const columns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
     },
-  }];
-  return (
-    <Table
-      dataSource={products}
-      columns={columns}
-    />
-  );
-};
-
-ProductList.propTypes = {
-  onDelete: PropTypes.func.isRequired,
-  products: PropTypes.array.isRequired,
+    {
+      title: 'Actions',
+      render: (text, record) => {
+        return (
+          <Popconfirm title="Delete?" onConfirm={() => onDelete(record.id)}>
+            <Button>Delete</Button>
+          </Popconfirm>
+        );
+      },
+    },
+  ];
+  return <Table dataSource={products} columns={columns} />;
 };
 
 export default ProductList;
 ```
 
-## 定义 Model
+## 定义 dva Model
 
 完成 UI 后，现在开始处理数据和逻辑。
 
-dva 通过 model 的概念把一个领域的模型管理起来，包含同步更新 state 的 reducers，处理异步逻辑的 effects，订阅数据源的 subscriptions 。
+dva 通过 `model` 的概念把一个领域的模型管理起来，包含同步更新 state 的 reducers，处理异步逻辑的 effects，订阅数据源的 subscriptions 。
 
-新建 model `models/products.js` ：
+新建 model `src/models/products.js`，
 
-```javascript
-import dva from 'dva';
-
+```js
 export default {
   namespace: 'products',
   state: [],
   reducers: {
-    'delete'(state, { payload: id }) {
+    delete(state, { payload: id }) {
       return state.filter(item => item.id !== id);
     },
   },
@@ -170,23 +150,17 @@ export default {
 - `state` 是初始值，在这里是空数组
 - `reducers` 等同于 redux 里的 reducer，接收 action，同步更新 state
 
-然后别忘记在 `index.js` 里载入他：
-
-```diff
-// 3. Model
-+ app.model(require('./models/products'));
-```
+umi 里约定 `src/models` 下的 model 会被自动注入，你无需手动注入。
 
 ## connect 起来
 
 到这里，我们已经单独完成了 model 和 component，那么他们如何串联起来呢?
 
-dva 提供了 connect 方法。如果你熟悉 redux，这个 connect 就是 react-redux 的 connect 。
+dva 提供了 `connect` 方法。如果你熟悉 redux，这个 connect 来自 react-redux。
 
-编辑 `routes/Products.js`，替换为以下内容：
+编辑 `src/pages/products.js`，替换为以下内容：
 
-```javascript
-import React from 'react';
+```js
 import { connect } from 'dva';
 import ProductList from '../components/ProductList';
 
@@ -205,74 +179,56 @@ const Products = ({ dispatch, products }) => {
   );
 };
 
-// export default Products;
 export default connect(({ products }) => ({
   products,
 }))(Products);
 ```
 
-最后，我们还需要一些初始数据让这个应用 run 起来。编辑 `index.js`：
+最后，我们还需要一些初始数据让这个应用 run 起来。编辑 `src/app.js`：
 
-```diff
-- const app = dva();
-+ const app = dva({
-+   initialState: {
-+     products: [
-+       { name: 'dva', id: 1 },
-+       { name: 'antd', id: 2 },
-+     ],
-+   },
-+ });
+```js
+export const dva = {
+  config: {
+    onError(err) {
+      err.preventDefault();
+      console.error(err.message);
+    },
+    initialState: {
+      products: [
+        { name: 'dva', id: 1 },
+        { name: 'antd', id: 2 },
+      ],
+    },
+  },
+};
 ```
 
 刷新浏览器，应该能看到以下效果：
 
-<p style="text-align: center">
-  <img src="https://zos.alipayobjects.com/rmsportal/GQJeDDeUCSTRMMg.gif" />
-</p>
+<img src="https://zos.alipayobjects.com/rmsportal/GQJeDDeUCSTRMMg.gif" />
 
 ## 构建应用
 
-完成开发并且在开发环境验证之后，就需要部署给我们的用户了。先执行下面的命令：
+完成开发并且在开发环境验证之后，就需要部署给我们的用户了。点击 `构建`，
 
-```bash
-$ npm run build
-```
+<img src="https://gw.alipayobjects.com/zos/antfincdn/D%2671c0zDk%26/a6c69c76-28e1-4001-9228-3affe8468e2f.png" width="718" />
 
-几秒后，输出应该如下：
-
-```bash
-> @ build /private/tmp/myapp
-> roadhog build
-
-Creating an optimized production build...
-Compiled successfully.
-
-File sizes after gzip:
-
-  82.98 KB  dist/index.js
-  270 B     dist/index.css
-```
-
-`build` 命令会打包所有的资源，包含 JavaScript, CSS, web fonts, images, html 等。然后你可以在 `dist/` 目录下找到这些文件。
+构建会打包所有的资源，包含 JavaScript, CSS, web fonts, images, html 等。你可以在 `dist/` 目录下找到这些文件。
 
 ## 下一步
 
 我们已经完成了一个简单应用，你可能还有很多疑问，比如：
 
-- 如何处理异步请求
-- 如何优雅地加载初始数据
-- 如何统一处理出错，以及特定操作的出错
-- 如何动态加载路由和 Model，以加速页面载入速度
-- 如何实现 hmr
-- 如何 mock 数据
+- 如何统一处理出错？
+- 如何处理更多路由，比如动态路由，嵌套路由，权限路由等？
+- 如何 mock 数据？
+- 如何部署？
 - 等等
 
 你可以：
 
-- 访问 [dva 官网](https://github.com/dvajs/dva)
-- 理解 dva 的 [8 个概念](https://github.com/dvajs/dva/blob/master/docs/Concepts_zh-CN.md) ，以及他们是如何串起来的
-- 掌握 dva 的[所有 API](https://github.com/dvajs/dva/blob/master/docs/API_zh-CN.md)
-- 查看 [dva 知识地图](https://github.com/dvajs/dva-knowledgemap) ，包含 ES6, React, dva 等所有基础知识
-- 查看 [更多 FAQ](https://github.com/dvajs/dva/issues?q=is%3Aissue+is%3Aclosed+label%3Afaq)，看看别人通常会遇到什么问题
-- 如果你基于 dva-cli 创建项目，最好了解他的 [配置方式](https://github.com/sorrycc/roadhog#配置)
+- 访问 [umi 官网](https://umijs.org/)和 [dva 官网](https://dvajs.com/)
+- 理解 [umi 的路由](https://umijs.org/zh/guide/router.html)
+- 理解 [如何部署 umi 应用](https://umijs.org/zh/guide/deploy.html)
+- 查看 [dva 知识地图](https://dvajs.com/knowledgemap/)，包含 ES6, React, dva 等所有基础知识
+- 理解 [dva 的 8 个概念](https://dvajs.com/guide/concepts.html)，以及他们是如何串起来的

@@ -1,14 +1,16 @@
-import CalendarLocale from 'rc-calendar/lib/locale/en_US';
-import TimePickerLocale from '../../time-picker/locale/en_US';
-import assign from 'object-assign';
+import CalendarLocale from 'rc-picker/lib/locale/vi_VN';
+import TimePickerLocale from '../../time-picker/locale/vi_VN';
 
 // Merge into a locale object
 const locale = {
-  lang: assign({
+  lang: {
     placeholder: 'Chọn thời điểm',
     rangePlaceholder: ['Ngày bắt đầu', 'Ngày kết thúc'],
-  }, CalendarLocale),
-  timePickerLocale: assign({}, TimePickerLocale),
+    ...CalendarLocale,
+  },
+  timePickerLocale: {
+    ...TimePickerLocale,
+  },
 };
 
 // All settings at:

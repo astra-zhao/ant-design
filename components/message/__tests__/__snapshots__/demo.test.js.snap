@@ -61,3 +61,25 @@ exports[`renders ./components/message/demo/other.md correctly 1`] = `
   </button>
 </div>
 `;
+
+exports[`renders ./components/message/demo/thenable.md correctly 1`] = `
+<button
+  class="ant-btn"
+  type="button"
+>
+  <span>
+    Display sequential messages
+  </span>
+</button>
+`;
+
+exports[`renders ./components/message/demo/update.md correctly 1`] = `
+<button
+  class="ant-btn ant-btn-primary"
+  type="button"
+>
+  <span>
+    Open the message box
+  </span>
+</button>
+`;

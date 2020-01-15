@@ -1,38 +1,101 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import * as React from 'react';
 import RcSwitch from 'rc-switch';
 import classNames from 'classnames';
+import omit from 'omit.js';
+import { LoadingOutlined } from '@ant-design/icons';
+
+import Wave from '../_util/wave';
+import { ConfigConsumer, ConfigConsumerProps } from '../config-provider';
+import warning from '../_util/warning';
+import SizeContext from '../config-provider/SizeContext';
+
+export type SwitchSize = 'small' | 'default';
+export type SwitchChangeEventHandler = (checked: boolean, event: MouseEvent) => void;
+export type SwitchClickEventHandler = SwitchChangeEventHandler;
 
 export interface SwitchProps {
   prefixCls?: string;
-  size?: 'small' | 'default';
+  size?: SwitchSize;
   className?: string;
   checked?: boolean;
   defaultChecked?: boolean;
-  onChange?: (checked: boolean) => any;
+  onChange?: SwitchChangeEventHandler;
+  onClick?: SwitchClickEventHandler;
   checkedChildren?: React.ReactNode;
   unCheckedChildren?: React.ReactNode;
   disabled?: boolean;
+  loading?: boolean;
+  autoFocus?: boolean;
+  style?: React.CSSProperties;
+  title?: string;
 }
 
-export default class Switch extends React.Component<SwitchProps, any> {
-  static defaultProps = {
-    prefixCls: 'ant-switch',
+export default class Switch extends React.Component<SwitchProps, {}> {
+  static __ANT_SWITCH = true;
+
+  private rcSwitch: typeof RcSwitch;
+
+  constructor(props: SwitchProps) {
+    super(props);
+
+    warning(
+      'checked' in props || !('value' in props),
+      'Switch',
+      '`value` is not validate prop, do you mean `checked`?',
+    );
+  }
+
+  saveSwitch = (node: typeof RcSwitch) => {
+    this.rcSwitch = node;
   };
 
-  static propTypes = {
-    prefixCls: PropTypes.string,
-    // HACK: https://github.com/ant-design/ant-design/issues/5368
-    // size=default and size=large are the same
-    size: PropTypes.oneOf(['small', 'default', 'large']),
-    className: PropTypes.string,
+  focus() {
+    this.rcSwitch.focus();
+  }
+
+  blur() {
+    this.rcSwitch.blur();
+  }
+
+  renderSwitch = ({ getPrefixCls, direction }: ConfigConsumerProps) => {
+    const {
+      prefixCls: customizePrefixCls,
+      size: customizeSize,
+      loading,
+      className = '',
+      disabled,
+    } = this.props;
+    const prefixCls = getPrefixCls('switch', customizePrefixCls);
+    const loadingIcon = loading ? (
+      <LoadingOutlined className={`${prefixCls}-loading-icon`} />
+    ) : null;
+    return (
+      <SizeContext.Consumer>
+        {size => {
+          const classes = classNames(className, {
+            [`${prefixCls}-small`]: (customizeSize || size) === 'small',
+            [`${prefixCls}-loading`]: loading,
+            [`${prefixCls}-rtl`]: direction === 'rtl',
+          });
+
+          return (
+            <Wave insertExtraNode>
+              <RcSwitch
+                {...omit(this.props, ['loading'])}
+                prefixCls={prefixCls}
+                className={classes}
+                disabled={disabled || loading}
+                ref={this.saveSwitch}
+                loadingIcon={loadingIcon}
+              />
+            </Wave>
+          );
+        }}
+      </SizeContext.Consumer>
+    );
   };
 
   render() {
-    const { prefixCls, size, className = '' } = this.props;
-    const classes = classNames(className, {
-      [`${prefixCls}-small`]: size === 'small',
-    });
-    return <RcSwitch {...this.props} className={classes} />;
+    return <ConfigConsumer>{this.renderSwitch}</ConfigConsumer>;
   }
 }

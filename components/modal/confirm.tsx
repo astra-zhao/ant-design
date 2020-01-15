@@ -1,101 +1,181 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import classNames from 'classnames';
-import assign from 'object-assign';
-import Icon from '../icon';
-import Dialog from './Modal';
+
+import Dialog, { ModalFuncProps, destroyFns } from './Modal';
 import ActionButton from './ActionButton';
 import { getConfirmLocale } from './locale';
+import warning from '../_util/warning';
 
-export default function confirm(config) {
-  const props = assign({ iconType: 'question-circle' }, config);
-  const prefixCls = props.prefixCls || 'ant-confirm';
-  let div = document.createElement('div');
-  document.body.appendChild(div);
+interface ConfirmDialogProps extends ModalFuncProps {
+  afterClose?: () => void;
+  close: (...args: any[]) => void;
+  autoFocusButton?: null | 'ok' | 'cancel';
+}
 
-  let width = props.width || 416;
-  let style = props.style || {};
+const IS_REACT_16 = !!ReactDOM.createPortal;
 
+const ConfirmDialog = (props: ConfirmDialogProps) => {
+  const {
+    icon,
+    onCancel,
+    onOk,
+    close,
+    zIndex,
+    afterClose,
+    visible,
+    keyboard,
+    centered,
+    getContainer,
+    maskStyle,
+    okButtonProps,
+    cancelButtonProps,
+  } = props;
+
+  warning(
+    !(typeof icon === 'string' && icon.length > 2),
+    'Modal',
+    `\`icon\` is using ReactNode instead of string naming in v4. Please check \`${icon}\` at https://ant.design/components/icon`,
+  );
+
+  // 支持传入{ icon: null }来隐藏`Modal.confirm`默认的Icon
+  const okType = props.okType || 'primary';
+  const prefixCls = props.prefixCls || 'ant-modal';
+  const contentPrefixCls = `${prefixCls}-confirm`;
+  // 默认为 true，保持向下兼容
+  const okCancel = 'okCancel' in props ? props.okCancel! : true;
+  const width = props.width || 416;
+  const style = props.style || {};
+  const mask = props.mask === undefined ? true : props.mask;
   // 默认为 false，保持旧版默认行为
   const maskClosable = props.maskClosable === undefined ? false : props.maskClosable;
-
-  // 默认为 true，保持向下兼容
-  if (!('okCancel' in props)) {
-    props.okCancel = true;
-  }
-
   const runtimeLocale = getConfirmLocale();
+  const okText = props.okText || (okCancel ? runtimeLocale.okText : runtimeLocale.justOkText);
+  const cancelText = props.cancelText || runtimeLocale.cancelText;
+  const autoFocusButton = props.autoFocusButton === null ? false : props.autoFocusButton || 'ok';
+  const transitionName = props.transitionName || 'zoom';
+  const maskTransitionName = props.maskTransitionName || 'fade';
 
-  props.okText = props.okText ||
-    (props.okCancel ? runtimeLocale.okText : runtimeLocale.justOkText);
-  props.cancelText = props.cancelText || runtimeLocale.cancelText;
+  const classString = classNames(
+    contentPrefixCls,
+    `${contentPrefixCls}-${props.type}`,
+    props.className,
+  );
 
-  function close(...args) {
+  const cancelButton = okCancel && (
+    <ActionButton
+      actionFn={onCancel}
+      closeModal={close}
+      autoFocus={autoFocusButton === 'cancel'}
+      buttonProps={cancelButtonProps}
+    >
+      {cancelText}
+    </ActionButton>
+  );
+
+  return (
+    <Dialog
+      prefixCls={prefixCls}
+      className={classString}
+      wrapClassName={classNames({ [`${contentPrefixCls}-centered`]: !!props.centered })}
+      onCancel={() => close({ triggerCancel: true })}
+      visible={visible}
+      title=""
+      transitionName={transitionName}
+      footer=""
+      maskTransitionName={maskTransitionName}
+      mask={mask}
+      maskClosable={maskClosable}
+      maskStyle={maskStyle}
+      style={style}
+      width={width}
+      zIndex={zIndex}
+      afterClose={afterClose}
+      keyboard={keyboard}
+      centered={centered}
+      getContainer={getContainer}
+    >
+      <div className={`${contentPrefixCls}-body-wrapper`}>
+        <div className={`${contentPrefixCls}-body`}>
+          {icon}
+          {props.title === undefined ? null : (
+            <span className={`${contentPrefixCls}-title`}>{props.title}</span>
+          )}
+          <div className={`${contentPrefixCls}-content`}>{props.content}</div>
+        </div>
+        <div className={`${contentPrefixCls}-btns`}>
+          {cancelButton}
+          <ActionButton
+            type={okType}
+            actionFn={onOk}
+            closeModal={close}
+            autoFocus={autoFocusButton === 'ok'}
+            buttonProps={okButtonProps}
+          >
+            {okText}
+          </ActionButton>
+        </div>
+      </div>
+    </Dialog>
+  );
+};
+
+export default function confirm(config: ModalFuncProps) {
+  const div = document.createElement('div');
+  document.body.appendChild(div);
+  // eslint-disable-next-line no-use-before-define
+  let currentConfig = { ...config, close, visible: true } as any;
+
+  function destroy(...args: any[]) {
     const unmountResult = ReactDOM.unmountComponentAtNode(div);
     if (unmountResult && div.parentNode) {
       div.parentNode.removeChild(div);
     }
-    const triggerCancel = args && args.length &&
-      args.some(param => param && param.triggerCancel);
-    if (props.onCancel && triggerCancel) {
-      props.onCancel(...args);
+    const triggerCancel = args.some(param => param && param.triggerCancel);
+    if (config.onCancel && triggerCancel) {
+      config.onCancel(...args);
+    }
+    for (let i = 0; i < destroyFns.length; i++) {
+      const fn = destroyFns[i];
+      // eslint-disable-next-line no-use-before-define
+      if (fn === close) {
+        destroyFns.splice(i, 1);
+        break;
+      }
     }
   }
 
-  let body = (
-    <div className={`${prefixCls}-body`}>
-      <Icon type={props.iconType} />
-      <span className={`${prefixCls}-title`}>{props.title}</span>
-      <div className={`${prefixCls}-content`}>{props.content}</div>
-    </div>
-  );
-
-  let footer: React.ReactElement<any> | null = null;
-  if (props.okCancel) {
-    footer = (
-      <div className={`${prefixCls}-btns`}>
-        <ActionButton actionFn={props.onCancel} closeModal={close}>
-          {props.cancelText}
-        </ActionButton>
-        <ActionButton type="primary" actionFn={props.onOk} closeModal={close} autoFocus>
-          {props.okText}
-        </ActionButton>
-      </div>
-    );
-  } else {
-    footer = (
-      <div className={`${prefixCls}-btns`}>
-        <ActionButton type="primary" actionFn={props.onOk} closeModal={close} autoFocus>
-          {props.okText}
-        </ActionButton>
-      </div>
-    );
+  function render(props: any) {
+    ReactDOM.render(<ConfirmDialog {...props} />, div);
   }
 
-  const classString = classNames(prefixCls, {
-    [`${prefixCls}-${props.type}`]: true,
-  }, props.className);
+  function close(...args: any[]) {
+    currentConfig = {
+      ...currentConfig,
+      visible: false,
+      afterClose: destroy.bind(this, ...args),
+    };
+    if (IS_REACT_16) {
+      render(currentConfig);
+    } else {
+      destroy(...args);
+    }
+  }
 
-  ReactDOM.render(
-    <Dialog
-      className={classString}
-      onCancel={close.bind(this, { triggerCancel: true })}
-      visible
-      title=""
-      transitionName="zoom"
-      footer=""
-      maskTransitionName="fade"
-      maskClosable={maskClosable}
-      style={style}
-      width={width}
-    >
-      <div className={`${prefixCls}-body-wrapper`}>
-        {body} {footer}
-      </div>
-    </Dialog>
-  , div);
+  function update(newConfig: ModalFuncProps) {
+    currentConfig = {
+      ...currentConfig,
+      ...newConfig,
+    };
+    render(currentConfig);
+  }
+
+  render(currentConfig);
+
+  destroyFns.push(close);
 
   return {
     destroy: close,
+    update,
   };
 }

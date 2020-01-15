@@ -1,22 +1,74 @@
-import React from 'react';
+import * as React from 'react';
 import Notification from 'rc-notification';
-import Icon from '../icon';
-import assign from 'object-assign';
-const notificationInstance = {};
+import {
+  CloseOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ExclamationCircleOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons';
+
+export type NotificationPlacement = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
+
+export type IconType = 'success' | 'info' | 'error' | 'warning';
+
+const notificationInstance: { [key: string]: any } = {};
 let defaultDuration = 4.5;
 let defaultTop = 24;
 let defaultBottom = 24;
-let defaultPlacement = 'topRight';
-let defaultGetContainer;
-export type notificationPlacement = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
+let defaultPlacement: NotificationPlacement = 'topRight';
+let defaultGetContainer: () => HTMLElement;
+let defaultCloseIcon: React.ReactNode;
 
-function getPlacementStyle(placement) {
+export interface ConfigProps {
+  top?: number;
+  bottom?: number;
+  duration?: number;
+  placement?: NotificationPlacement;
+  getContainer?: () => HTMLElement;
+  closeIcon?: React.ReactNode;
+}
+
+function setNotificationConfig(options: ConfigProps) {
+  const { duration, placement, bottom, top, getContainer, closeIcon } = options;
+  if (duration !== undefined) {
+    defaultDuration = duration;
+  }
+  if (placement !== undefined) {
+    defaultPlacement = placement;
+  }
+  if (bottom !== undefined) {
+    defaultBottom = bottom;
+  }
+  if (top !== undefined) {
+    defaultTop = top;
+  }
+  if (getContainer !== undefined) {
+    defaultGetContainer = getContainer;
+  }
+  if (closeIcon !== undefined) {
+    defaultCloseIcon = closeIcon;
+  }
+}
+
+function getPlacementStyle(
+  placement: NotificationPlacement,
+  top: number = defaultTop,
+  bottom: number = defaultBottom,
+) {
   let style;
   switch (placement) {
     case 'topLeft':
       style = {
         left: 0,
-        top: defaultTop,
+        top,
+        bottom: 'auto',
+      };
+      break;
+    case 'topRight':
+      style = {
+        right: 0,
+        top,
         bottom: 'auto',
       };
       break;
@@ -24,188 +76,185 @@ function getPlacementStyle(placement) {
       style = {
         left: 0,
         top: 'auto',
-        bottom: defaultBottom,
-      };
-      break;
-    case 'bottomRight':
-      style = {
-        right: 0,
-        top: 'auto',
-        bottom: defaultBottom,
+        bottom,
       };
       break;
     default:
       style = {
         right: 0,
-        top: defaultTop,
-        bottom: 'auto',
+        top: 'auto',
+        bottom,
       };
+      break;
   }
   return style;
 }
 
+type NotificationInstanceProps = {
+  prefixCls: string;
+  placement?: NotificationPlacement;
+  getContainer?: () => HTMLElement;
+  top?: number;
+  bottom?: number;
+  closeIcon?: React.ReactNode;
+};
+
+function getNotificationInstance(
+  {
+    prefixCls,
+    placement = defaultPlacement,
+    getContainer = defaultGetContainer,
+    top,
+    bottom,
+    closeIcon = defaultCloseIcon,
+  }: NotificationInstanceProps,
+  callback: (n: any) => void,
+) {
+  const cacheKey = `${prefixCls}-${placement}`;
+  if (notificationInstance[cacheKey]) {
+    callback(notificationInstance[cacheKey]);
+    return;
+  }
+
+  const closeIconToRender = (
+    <span className={`${prefixCls}-close-x`}>
+      {closeIcon || <CloseOutlined className={`${prefixCls}-close-icon`} />}
+    </span>
+  );
+
+  (Notification as any).newInstance(
+    {
+      prefixCls,
+      className: `${prefixCls}-${placement}`,
+      style: getPlacementStyle(placement, top, bottom),
+      getContainer,
+      closeIcon: closeIconToRender,
+    },
+    (notification: any) => {
+      notificationInstance[cacheKey] = notification;
+      callback(notification);
+    },
+  );
+}
+
+const typeToIcon = {
+  success: CheckCircleOutlined,
+  info: InfoCircleOutlined,
+  error: CloseCircleOutlined,
+  warning: ExclamationCircleOutlined,
+};
+
 export interface ArgsProps {
   message: React.ReactNode;
-  description: React.ReactNode;
+  description?: React.ReactNode;
   btn?: React.ReactNode;
   key?: string;
   onClose?: () => void;
-  duration?: number;
+  duration?: number | null;
   icon?: React.ReactNode;
-  placement?: notificationPlacement;
-  style?: string;
+  placement?: NotificationPlacement;
+  style?: React.CSSProperties;
+  prefixCls?: string;
   className?: string;
-}
-
-export interface ConfigProps {
+  readonly type?: IconType;
+  onClick?: () => void;
   top?: number;
   bottom?: number;
-  duration?: number;
-  placement?: notificationPlacement;
   getContainer?: () => HTMLElement;
+  closeIcon?: React.ReactNode;
 }
 
-function getNotificationInstance(prefixCls) {
-  if (notificationInstance[defaultPlacement]) {
-    return notificationInstance[defaultPlacement];
-  }
-  notificationInstance[defaultPlacement] = (Notification as any).newInstance({
-    prefixCls: prefixCls,
-    className: `${prefixCls}-${defaultPlacement}`,
-    style: getPlacementStyle(defaultPlacement),
-    getContainer: defaultGetContainer,
-  });
-  return notificationInstance[defaultPlacement];
-}
-
-function notice(args) {
+function notice(args: ArgsProps) {
   const outerPrefixCls = args.prefixCls || 'ant-notification';
   const prefixCls = `${outerPrefixCls}-notice`;
+  const duration = args.duration === undefined ? defaultDuration : args.duration;
 
-  if (args.placement !== undefined) {
-    defaultPlacement = args.placement;
-  }
-
-  let duration;
-  if (args.duration === undefined) {
-    duration = defaultDuration;
-  } else {
-    duration = args.duration;
-  }
-
-  let iconType = '';
-  switch (args.type) {
-    case 'success':
-      iconType = 'check-circle-o';
-      break;
-    case 'info':
-      iconType = 'info-circle-o';
-      break;
-    case 'error':
-      iconType = 'cross-circle-o';
-      break;
-    case 'warning':
-      iconType = 'exclamation-circle-o';
-      break;
-    default:
-      iconType = 'info-circle';
-  }
-
-  let iconNode;
+  let iconNode: React.ReactNode = null;
   if (args.icon) {
-    iconNode = (
-      <span className={`${prefixCls}-icon`}>
-        {args.icon}
-      </span>
-    );
+    iconNode = <span className={`${prefixCls}-icon`}>{args.icon}</span>;
   } else if (args.type) {
-    iconNode = <Icon className={`${prefixCls}-icon ${prefixCls}-icon-${args.type}`} type={iconType} />;
+    iconNode = React.createElement(typeToIcon[args.type] || null, {
+      className: `${prefixCls}-icon ${prefixCls}-icon-${args.type}`,
+    });
   }
 
-  const autoMarginTag = (!args.description && iconNode)
-    ? <span className={`${prefixCls}-message-single-line-auto-margin`} />
-    : null;
+  const autoMarginTag =
+    !args.description && iconNode ? (
+      <span className={`${prefixCls}-message-single-line-auto-margin`} />
+    ) : null;
 
-  const { style, className } = args;
-  getNotificationInstance(outerPrefixCls).notice({
-    content: (
-      <div className={iconNode ? `${prefixCls}-with-icon` : ''}>
-        {iconNode}
-        <div className={`${prefixCls}-message`}>
-          {autoMarginTag}
-          {args.message}
-        </div>
-        <div className={`${prefixCls}-description`}>{args.description}</div>
-        {args.btn ? <span className={`${prefixCls}-btn`}>{args.btn}</span> : null}
-      </div>
-    ),
-    duration,
-    closable: true,
-    onClose: args.onClose,
-    key: args.key,
-    style: assign({}, style),
-    className,
-  });
+  const { placement, top, bottom, getContainer, closeIcon } = args;
+
+  getNotificationInstance(
+    {
+      prefixCls: outerPrefixCls,
+      placement,
+      top,
+      bottom,
+      getContainer,
+      closeIcon,
+    },
+    (notification: any) => {
+      notification.notice({
+        content: (
+          <div className={iconNode ? `${prefixCls}-with-icon` : ''}>
+            {iconNode}
+            <div className={`${prefixCls}-message`}>
+              {autoMarginTag}
+              {args.message}
+            </div>
+            <div className={`${prefixCls}-description`}>{args.description}</div>
+            {args.btn ? <span className={`${prefixCls}-btn`}>{args.btn}</span> : null}
+          </div>
+        ),
+        duration,
+        closable: true,
+        onClose: args.onClose,
+        onClick: args.onClick,
+        key: args.key,
+        style: args.style || {},
+        className: args.className,
+      });
+    },
+  );
 }
 
-const api: {
-  success?(args: ArgsProps): void;
-  error?(args: ArgsProps): void;
-  info?(args: ArgsProps): void;
-  warn?(args: ArgsProps): void;
-  warning?(args: ArgsProps): void;
-
-  open(args: ArgsProps): void;
-  close(key: string): void;
-  config(options: ConfigProps): void;
-  destroy(): void;
-} = {
-  open(args: ArgsProps) {
-    notice(args);
+const api: any = {
+  open: notice,
+  close(key: string) {
+    Object.keys(notificationInstance).forEach(cacheKey =>
+      notificationInstance[cacheKey].removeNotice(key),
+    );
   },
-  close(key) {
-    if (notificationInstance[defaultPlacement]) {
-      notificationInstance[defaultPlacement].removeNotice(key);
-    }
-  },
-  config(options: ConfigProps) {
-    const { duration, placement, bottom, top, getContainer } = options;
-    if (placement !== undefined) {
-      defaultPlacement = placement;
-    }
-    if (bottom !== undefined) {
-      defaultBottom = bottom;
-    }
-    if (top !== undefined) {
-      defaultTop = top;
-    }
-    if (getContainer !== undefined) {
-      defaultGetContainer = getContainer;
-    }
-    // delete notificationInstance
-    if (placement !== undefined || bottom !== undefined || top !== undefined) {
-      const notify = notificationInstance[defaultPlacement];
-      if (notify) {
-        notify.destroy();
-      }
-      notificationInstance[defaultPlacement] = null;
-    }
-    if (duration !== undefined) {
-      defaultDuration = duration;
-    }
-  },
+  config: setNotificationConfig,
   destroy() {
-    Object.keys(notificationInstance).forEach(key => {
-      notificationInstance[key].destroy();
-      delete notificationInstance[key];
+    Object.keys(notificationInstance).forEach(cacheKey => {
+      notificationInstance[cacheKey].destroy();
+      delete notificationInstance[cacheKey];
     });
   },
 };
 
-['success', 'info', 'warning', 'error'].forEach((type) => {
-  api[type] = (args: ArgsProps) => api.open(assign({}, args, { type }));
+['success', 'info', 'warning', 'error'].forEach(type => {
+  api[type] = (args: ArgsProps) =>
+    api.open({
+      ...args,
+      type,
+    });
 });
 
-(api as any).warn = (api as any).warning;
+api.warn = api.warning;
 
-export default api;
+export interface NotificationApi {
+  success(args: ArgsProps): void;
+  error(args: ArgsProps): void;
+  info(args: ArgsProps): void;
+  warn(args: ArgsProps): void;
+  warning(args: ArgsProps): void;
+  open(args: ArgsProps): void;
+  close(key: string): void;
+  config(options: ConfigProps): void;
+  destroy(): void;
+}
+
+export default api as NotificationApi;

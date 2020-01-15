@@ -7,15 +7,16 @@ title:
 
 ## zh-CN
 
-可以左右滑动，容纳更多标签。
+可以左右、上下滑动，容纳更多标签。
 
 ## en-US
 
-Tab can be slide to left or right, which is used for a lot of tabs.
+In order to fit in more tabs, they can slide left and right (or up and down).
 
-````jsx
+```jsx
 import { Tabs, Radio } from 'antd';
-const TabPane = Tabs.TabPane;
+
+const { TabPane } = Tabs;
 
 class SlidingTabsDemo extends React.Component {
   constructor(props) {
@@ -24,10 +25,12 @@ class SlidingTabsDemo extends React.Component {
       mode: 'top',
     };
   }
-  handleModeChange = (e) => {
+
+  handleModeChange = e => {
     const mode = e.target.value;
     this.setState({ mode });
-  }
+  };
+
   render() {
     const { mode } = this.state;
     return (
@@ -36,20 +39,12 @@ class SlidingTabsDemo extends React.Component {
           <Radio.Button value="top">Horizontal</Radio.Button>
           <Radio.Button value="left">Vertical</Radio.Button>
         </Radio.Group>
-        <Tabs
-          defaultActiveKey="1"
-          tabPosition={mode}
-          style={{ height: 220 }}
-        >
-          <TabPane tab="Tab 1" key="1">Content of tab 1</TabPane>
-          <TabPane tab="Tab 2" key="2">Content of tab 2</TabPane>
-          <TabPane tab="Tab 3" key="3">Content of tab 3</TabPane>
-          <TabPane tab="Tab 4" key="4">Content of tab 4</TabPane>
-          <TabPane tab="Tab 5" key="5">Content of tab 5</TabPane>
-          <TabPane tab="Tab 6" key="6">Content of tab 6</TabPane>
-          <TabPane tab="Tab 7" key="7">Content of tab 7</TabPane>
-          <TabPane tab="Tab 8" key="8">Content of tab 8</TabPane>
-          <TabPane tab="Tab 9" key="9">Content of tab 9</TabPane>
+        <Tabs defaultActiveKey="1" tabPosition={mode} style={{ height: 220 }}>
+          {[...Array(30).keys()].map(i => (
+            <TabPane tab={`Tab-${i}`} key={i}>
+              Content of tab {i}
+            </TabPane>
+          ))}
         </Tabs>
       </div>
     );
@@ -57,4 +52,4 @@ class SlidingTabsDemo extends React.Component {
 }
 
 ReactDOM.render(<SlidingTabsDemo />, mountNode);
-````
+```

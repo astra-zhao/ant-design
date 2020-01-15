@@ -5,147 +5,335 @@ cols: 1
 title: Form
 ---
 
-Form is used to collect, validate, and submit the user input, usually contains various form items including checkbox, radio, input, select, and etc.
+High performance Form component with data scope management. Including data collection, verification, and styles.
 
-## Form
+## When to use
 
-You can align the controls of a `form` using one of the following attributes：
-
-- `horizontal`：to horizontally align the `label`s and controls of the fields. (Default)
-- `vertical`：to vertically align the `label`s and controls of the fields.
-- `inline`：to render form fields in one line.
-
-## Form fields
-
-A form consists of one or more form fields whose type includes input, textarea, checkbox, radio, select, tag, and more.
-A form field is defined using `<Form.Item />`.
-
-```jsx
-<Form.Item {...props}>
-  {children}
-</Form.Item>
-```
-
-> PS：By default, large size controls are used within a form.
+- When you need to create a instance or collect information.
+- When you need to validate fields in certain rules.
 
 ## API
 
 ### Form
 
-**more example [rc-form](http://react-component.github.io/form/)**。
+| Property | Description | Type | Default |
+| --- | --- | --- | --- |
+| component | Set the Form rendering element. Do not create a DOM node for `false` | ComponentType \| false | form |
+| colon | Configure the default value of `colon` for Form.Item. Indicates whether the colon after the label is displayed (only effective when prop layout is horizontal) | boolean | true |
+| fields | Control of form fields through state management (such as redux). Not recommended for non-strong demand. View [example](#components-form-demo-global-state) | [FieldData](#FieldData)\[] | - |
+| form | Form control instance created by `Form.useForm()`. Automatically created when not provided | [FormInstance](#FormInstance) | - |
+| hideRequiredMark | Hide required mark for all form items | boolean | false |
+| initialValues | Set value by Form initialization or reset | object | - |
+| labelAlign | text align of label of all items | 'left' \| 'right' | 'right' |
+| labelCol | label layout, like `<Col>` component. Set `span` `offset` value like `{span: 3, offset: 12}` or `sm: {span: 3, offset: 12}` | [object](https://ant.design/components/grid/#Col) | - |
+| layout | Form layout | 'horizontal'\|'vertical'\|'inline' | 'horizontal' |
+| name | Form name. Will be the prefix of Field `id` | string | - |
+| size | Set field component size (antd components only) | `small | middle | large` | - |
+| validateMessages | 验证提示模板，说明[见下](#validateMessages) | [ValidateMessages](https://github.com/react-component/field-form/blob/master/src/utils/messages.ts) | - |
+| wrapperCol | The layout for input controls, same as `labelCol` | [object](https://ant.design/components/grid/#Col) | - |
+| onFinish | Trigger after submitting the form and verifying data successfully | Function(values) | - |
+| onFinishFailed | Trigger after submitting the form and verifying data failed | Function({ values, errorFields, outOfDate }) | - |
+| onFieldsChange | Trigger when field updated | Function(changedFields, allFields) | - |
+| onValuesChange | Trigger when value updated | Function(changedValues, allValues) | - |
 
-| Property  | Description                              | Type       | Default Value |
-|-----------|------------------------------------------|------------|---------|
-| form | Decorated by `Form.create()` will be automatically set `this.props.form` property, so just pass to form, you don't need to set it by yourself after 1.7.0. | object | n/a
-| layout | Define form layout(Support after 2.8) | 'horizontal'\|'vertical'\|'inline' | 'horizontal' |
-| horizontal | Use horizontal layout(Deprecated after 2.8) | boolean | true |
-| vertical | Use vertical layout(Deprecated after 2.8) | boolean | false |
-| inline | Use inline alignment(Deprecated after 2.8) | boolean | false |
-| onSubmit | Defines a function will be called if form data validation is successful. | Function(e:Event) |  |
-| hideRequiredMark | Hide required mark of all form items | Boolean | false |
+### validateMessages
 
-### Form.create(options)
-
-How to use：
+Form provides [default verification error messages](https://github.com/react-component/field-form/blob/master/src/utils/messages.ts). You can modify template by configuring `validateMessages` property. A common usage is to configure localization:
 
 ```jsx
-class CustomizedForm extends React.Component {}
+const validateMessages = {
+  required: "'${name}' is required!",
+  // ...
+};
 
-CustomizedForm = Form.create({})(CustomizedForm);
+<Form validateMessages={validateMessages} />;
 ```
 
-The following `options` are available:
+Besides,[ConfigProvider](/components/config-provider/) also provides a global configuration scheme that allows for uniform configuration error notification templates:
 
-| Property      | Description                          | Type       |
-|-----------|------------------------------------------|------------|
-| onFieldsChange | Specify a function that will be called when the value a `Form.Item` gets changed. Usage example: saving the field's value to Redux store. | Function(props, fields) |
-| mapPropsToFields | Convert props to corresponding field value. Usage example: reading the values from Redux store. | Function(props): Object{ fieldName: Object{ value } } |
-| onValuesChange | A handler while value of any field is changed | (props, values) => void |
+```jsx
+const validateMessages = {
+  required: "'${name}' is Required!",
+  // ...
+};
 
-If the form has been decorated by `Form.create` then it has `this.props.form` property. `this.props.form` provides some APIs as follows:
+<ConfigProvider form={{ validateMessages }}>
+  <Form />
+</ConfigProvider>;
+```
 
-> Note: Before using `getFieldsValue` `getFieldValue` `setFieldsValue` and so on, please make sure that corresponding field had been registered with `getFieldDecorator`.
+## Form.Item
 
-| Property      | Description                          | Type       |
-|-----------|------------------------------------------|------------|
-| getFieldsValue | Get the specified fields' values. If you don't specify a parameter, you will get all fields' values. | Function([fieldNames: string[]]) |
-| getFieldValue | Get the value of a field. | Function(fieldName: string) |
-| setFieldsValue | Set the value of a field.(Note: please don't use it in `componentWillReceiveProps`, otherwise, it will cause an endless loop, [more](https://github.com/ant-design/ant-design/issues/2985)) | Function({ [fieldName]: value } |
-| setFields |  | Function(obj: object) |
-| setFields | Set the value and error of a field. [Code Sample](https://github.com/react-component/form/blob/3b9959b57ab30b41d8890ff30c79a7e7c383cad3/examples/server-validate.js#L74-L79) | Function({ [fieldName]: { value: any, errors: [Error] } }) |
-| validateFields | Validate the specified fields and get theirs values and errors. If you don't specify the parameter of fieldNames, you will vaildate all fields.  | Function([fieldNames: string[]], [options: object], callback: Function(errors, values)) |
-| validateFieldsAndScroll | This function is similar to `validateFields`, but after validation, if the target field is not in visible area of form, form will be automatically scrolled to the target field area. | same as `validateFields` |
-| getFieldError | Get the error of a field. | Function(name) |
-| getFieldsError | Get the specified fields' error. If you don't specify a parameter, you will get all fields' error. | Function([names: string[]]) |
-| isFieldValidating | Check if the specified field is being validated. | Function(name) |
-| isFieldTouched | Check whether a field is touched by `getFieldDecorator`'s `options.trigger` event | (name: string) => boolean |
-| isFieldsTouched | Check whether any of fields is touched by `getFieldDecorator`'s `options.trigger` event | (names?: string[]) => boolean |
-| resetFields | Reset the specified fields' value(to `initialValue`) and status. If you don't specify a parameter, all the fields will be reset. | Function([names: string[]]) |
-| getFieldDecorator | Two-way binding for form, please read below for details. | |
+Form field component for data bidirectional binding, validation, layout, and so on.
 
-### this.props.form.getFieldDecorator(id, options)
-
-After wrapped by `getFieldDecorator`, `value`(or other property defined by `valuePropName`) `onChange`(or other property defined by `trigger`) props will be added to form controls，the flow of form data will be handled by Form which will cause:
-
-1. You don't need to use `onChange` to collect data, but you still can listen to `onChange`(and so on) events.
-2. You can not set value of form control via `value` `defaultValue` prop, and you should set default value with `initialValue` in `getFieldDecorator` instead.
-3. You don't need to call `setState` manually, please use `this.props.form.setFieldsValue` to change value programmatically.
-
-#### Special attention
-
-If you use `react@<15.3.0`, then, you can't use `getFieldDecorator` in stateless component: https://github.com/facebook/react/pull/6534
-
-#### getFieldDecorator(id, options) parameters
-
-| Property  | Description                             | Type | Default Value |
-|-----------|-----------------------------------------|------|---------------|
-| id | The unique identifier is required. support [nested fields format](https://github.com/react-component/form/pull/48). | string | |
-| options.valuePropName | Props of children node, for example, the prop of Switch is 'checked'. | string | 'value' |
-| options.initialValue | You can specify initial value, type, optional value of children node. (Note: Because `Form` will test equality with `===` internaly, we recommend to use vairable as `initialValue`, instead of literal) | | n/a |
-| options.trigger | When to collect the value of children node | string | 'onChange' |
-| options.getValueFromEvent | To convert parameters of onChange to the value of control | function(..args) | [reference](https://github.com/react-component/form#optiongetvaluefromevent) |
-| options.validateTrigger | When to validate the value of children node. | string\|string[] | 'onChange' |
-| options.rules | Includes validation rules. Please refer to "Validation Rules" part for details. | object[] | n/a |
-| options.exclusive | Whether it is exclusive with other controls, particularly for Radio. | boolean | false |
-
-### Form.Item
-
-Note:
-* If Form.Item has multiple children that had been decorated by `getFieldDecorator`, `help` and `required` and `validateStatus` can't be generated automatically.
-* Before `2.2.0`, form controls must be child of Form.Item, otherwise, you need to set `help`, `required` and `validateStatus` by yourself.
-
-| Property      | Description                          | Type   | Default Value |
-|---------------|--------------------------------------|--------|---------------|
-| label | Label text | string\|ReactNode |   |
-| labelCol | The layout of label. You can set `span` `offset` to something like `{span: 3, offset: 12}` or `sm: {span: 3, offset: 12}` same as with `<Col>` | [object](https://ant.design/components/grid/#Col) |  |
-| wrapperCol | The layout for input controls, same as `labelCol` | [object](https://ant.design/components/grid/#Col) |  |
-| help | The prompt message. If not provided, the prompt message will be generated by the validation rule. | string\|ReactNode |  |
-| extra | The extra prompt message. It is similar to help. Usage example: to display error message and prompt message at the same time. | string\|ReactNode |  |
-| required | Whether provided or not, it will be generated by the validation rule. | boolean | false |
-| validateStatus | The validation status. If not provided, it will be generated by validation rule. options: 'success' 'warning' 'error' 'validating' | string |  |
-| hasFeedback | Used with `validateStatus`, this option specifies the validation status icon. Recommended to be used only with `Input`. | boolean | false |
+| Property | Description | Type | Default |
+| --- | --- | --- | --- |
 | colon | Used with `label`, whether to display `:` after label text. | boolean | true |
+| dependencies | Set the dependency field. See [below](#dependencies) | [NamePath](#NamePath)[] | - |
+| extra | The extra prompt message. It is similar to help. Usage example: to display error message and prompt message at the same time | string\|ReactNode | - |
+| getValueFromEvent | Specify how to get value from event or other onChange arguments | (..args: any[]) => any | - |
+| hasFeedback | Used with `validateStatus`, this option specifies the validation status icon. Recommended to be used only with `Input` | boolean | false |
+| help | The prompt message. If not provided, the prompt message will be generated by the validation rule. | string\|ReactNode | - |
+| htmlFor | Set sub label `htmlFor` | string | - |
+| noStyle | No style for `true`, used as a pure field control | boolean | false |
+| label | Label text | string\|ReactNode | - |
+| labelAlign | text align of label | 'left' \| 'right' | 'right' |
+| labelCol | The layout of label. You can set `span` `offset` to something like `{span: 3, offset: 12}` or `sm: {span: 3, offset: 12}` same as with `<Col>`. You can set `labelCol` on Form. If both exists, use Item first | [object](/components/grid/#Col) | - |
+| name | Field name, support array | [NamePath](#NamePath) | - |
+| normalize | Normalize value to form component | (value, prevValue, prevValues) => any | - |
+| required | Whether provided or not, it will be generated by the validation rule | boolean | false |
+| rules | Rules for field validation. Click [here](#components-form-demo-basic) to see an example | [Rule](#Rule)[] | - |
+| shouldUpdate | Custom field update logic. See [bellow](#shouldUpdate) | boolean \| (prevValue, curValue) => boolean | false |
+| trigger | When to collect the value of children node | string | onChange |
+| validateStatus | The validation status. If not provided, it will be generated by validation rule. options: 'success' 'warning' 'error' 'validating' | string | - |
+| validateTrigger | When to validate the value of children node | string \| string[] | onChange |
+| valuePropName | Props of children node, for example, the prop of Switch is 'checked' | string | 'value' |
+| wrapperCol | The layout for input controls, same as `labelCol`. You can set `wrapperCol` on Form. If both exists, use Item first | [object](/components/grid/#Col) | - |
 
-### Validation Rules
+### dependencies
 
-Property | Description | Type | Default Value
----------|-------------|------|--------------
-message | validation error message | string | -
-type | built-in validation type, [available options](https://github.com/yiminghe/async-validator#type) | string | 'string'
-required | indicates whether field is required | boolean | `false`
-whitespace | treat required fields that only contain whitespace as errors | boolean | `false`
-len | validate an exact length of a field | number | -
-min | validate a min length of a field | number | -
-max | validate a max length of a field | number | -
-enum | validate a value from a list of possible values | string | -
-pattern | validate from a regular expression | RegExp | -
-transform | transform a value before validation | function(value) => transformedValue:any | -
-validator | custom validate function (Note: [callback must be called](https://github.com/ant-design/ant-design/issues/5155)) | function(rule, value, callback) | -
+Used when there are dependencies between fields. If a field has the `dependencies` prop, this field will automatically trigger updates and validations when upstream updated. A common scenario is user register form with "password" and "confirm password" fields. The "Confirm Password" validation depends on the "Password" field. After setting `dependencies`, the "Password" field update will re-trigger the validation of "Check Password". You can refer [examples](#components-form-demo-register).
 
-See more advanced usage at [async-validator](https://github.com/yiminghe/async-validator).
+### shouldUpdate
+
+Form updates only the modified field-related components for performance optimization purposes by incremental update. In most case, you only need to write code or do validation with the [`dependencies`](#dependencies) property. And in some specific case, such as a new field option appears with a filed value changed, or just want to keep some area updating by form update. You can modify the update logic of Form.Item via the `shouldUpdate`.
+
+When `shouldUpdate` is `true`, any Form update will cause the Form.Item to be re-rendered. This is very helpful for custom rendering some areas:
+
+```jsx
+<Form.Item shouldUpdate>
+  {() => {
+    return <pre>{JSON.stringify(form.getFieldsValue(), null, 2)}</pre>;
+  }}
+</Form.Item>
+```
+
+You can ref [example](#components-form-demo-horizontal-login) to see detail.
+
+When `shouldUpdate` is a function, it will be called by form values update. Providing original values and current value to compare. This is very helpful for rendering additional fields based on values:
+
+```jsx
+<Form.Item shouldUpdate={(prevValues, curValues) => prevValues.additional !== curValues.additional}>
+  {() => {
+    return (
+      <Form.Item name="other">
+        <Input />
+      </Form.Item>
+    );
+  }}
+</Form.Item>
+```
+
+You can ref [example](#components-form-demo-control-hooks) to see detail.
+
+## Form.List
+
+Provides array management for fields.
+
+| Property | Description | Type | Default |
+| --- | --- | --- | --- |
+| name | Field name, support array | [NamePath](#NamePath) | - |
+| children | Render function | (fields: Field[], operation: { add, remove, move }) => React.ReactNode | - |
+
+```tsx
+<Form.List>
+  {fields => (
+    <div>
+      {fields.map(field => (
+        <Form.Item {...field}>
+          <Input />
+        </Form.Item>
+      ))}
+    </div>
+  )}
+</Form.List>
+```
+
+## Form.Provider
+
+Provide linkage between forms. If a sub form with `name` prop update, it will auto trigger Provider related events. See [example](#components-form-demo-form-context).
+
+| Property | Description | Type | Default |
+| --- | --- | --- | --- |
+| onFormChange | Triggered when a sub form field updates | Function(formName: string, info: { changedFields, forms }) | - |
+| onFormFinish | Triggered when a sub form submits | Function(formName: string, info: { values, forms }) | - |
+
+```jsx
+<Form.Provider
+  onFormFinish={name => {
+    if (name === 'form1') {
+      // Do something...
+    }
+  }}
+>
+  <Form name="form1">...</Form>
+  <Form name="form2">...</Form>
+</Form.Provider>
+```
+
+### FormInstance
+
+| Name | Description | Type |
+| --- | --- | --- |
+| getFieldValue | Get the value by the field name | (name: [NamePath](#NamePath)) => any |
+| getFieldsValue | Get values by a set of field names. Return according to the corresponding structure | (nameList?: [NamePath](#NamePath)[]) => any |
+| getFieldError | Get the error messages by the field name | (name: [NamePath](#NamePath)) => string[] |
+| getFieldsError | Get the error messages by the fields name. Return as an array | (nameList?: [NamePath](#NamePath)[]) => FieldError[] |
+| isFieldTouched | Check if a field has been operated | (name: [NamePath](#NamePath)) => boolean |
+| isFieldsTouched | Check if fields have been operated. Check if all fields is touched when `allTouched` is `true` | (nameList?: [NamePath](#NamePath)[], allTouched?: boolean) => boolean |
+| isFieldValidating | Check fields if is in validating | (name: [NamePath](#NamePath)) => boolean |
+| resetFields | Reset fields to `initialValues` | (fields?: [NamePath](#NamePath)[]) => void |
+| scrollToField | Scroll to field position | (name: [NamePath](#NamePath)) => void |
+| setFields | Set fields status | (fields: FieldData[]) => void |
+| setFieldsValue | Set fields value | (values) => void |
+| submit | Submit the form. It's same as click `submit` button | () => void |
+| validateFields | Validate fields | (nameList?: [NamePath](#NamePath)[]) => Promise |
+
+#### validateFields return sample
+
+```jsx
+validateFields()
+  .then(values => {
+    /*
+  values:
+    {
+      username: 'username',
+      password: 'password',
+    }
+  */
+  })
+  .catch(errorInfo => {
+    /*
+    errorInfo:
+      {
+        values: {
+          username: 'username',
+          password: 'password',
+        },
+        errorFields: [
+          { password: ['username'], errors: ['Please input your Password!'] },
+        ],
+        outOfDate: false,
+      }
+    */
+  });
+```
+
+### Interface
+
+#### NamePath
+
+`string | number | (string | number)[]`
+
+#### FieldData
+
+| Name       | Description              | Type                    |
+| ---------- | ------------------------ | ----------------------- |
+| touched    | Whether is operated      | boolean                 |
+| validating | Whether is in validating | boolean                 |
+| errors     | Error messages           | string[]                |
+| name       | Field name path          | [NamePath](#NamePath)[] |
+| value      | Field value              | any                     |
+
+#### Rule
+
+Rule support config object, an also support function to get config object:
+
+```tsx
+type Rule = RuleConfig | ((form: FormInstance) => RuleConfig);
+```
+
+| Name | Description | Type |
+| --- | --- | --- |
+| enum | Match enum value | any[] |
+| len | Length of string, number, array | number |
+| max | Max length of string, number, array | number |
+| message | Error message. Will auto generate by [template](#validateMessages) if not provided | string |
+| min | Min length of string, number, array | number |
+| pattern | Regex pattern | RegExp |
+| required | Required field | boolean |
+| transform | Transform value to the rule before validation | (value) => any |
+| type | Normally `string` \|`number` \|`boolean` \|`url` \| `email`. More type to ref [here](https://github.com/yiminghe/async-validator#type) | string |
+| validator | Customize validation rule. Accept Promise as return. [example](#components-form-demo-register)参考 | ([rule](#Rule), value) => Promise |
+| whitespace | Failed if only has whitespace | boolean |
+| validateTrigger | Set validate trigger event. Must be the sub set of `validateTrigger` in Form.Item | string \| string[] |
+
+## Migrate to v4
+
+If you are the user of v3, you can ref [migrate doc](/components/form/v3)。
 
 <style>
 .code-box-demo .ant-form:not(.ant-form-inline):not(.ant-form-vertical) {
-  max-width: 540px;
+  max-width: 600px;
 }
+.markdown.api-container table td:last-child {
+  white-space: nowrap;
+  word-wrap: break-word;
+}
+</style>
+
+## FAQ
+
+### Customize validator do not working
+
+It caused by your `validator` with some error that `callback` can not be called. You can use `async` instead or use `try...catch` to catch the error:
+
+```jsx
+validator: async (rule, value) => {
+  throw new Error('Something wrong!');
+}
+
+// or
+
+validator(rule, value, callback) => {
+  try {
+    throw new Error('Something wrong!');
+  } catch (err) {
+    callback(err);
+  }
+}
+```
+
+### Get form instance from function component
+
+You can combine `forwardRef` with `useImperativeHandle` to get form instance:
+
+```tsx
+import React, { forwardRef, useImperativeHandle } from 'react';
+import Form, { FormComponentProps } from 'antd/lib/form/Form';
+
+const FCForm = forwardRef<FormComponentProps, FCFormProps>(({ form, onSubmit }, ref) => {
+  useImperativeHandle(ref, () => ({
+    form,
+  }));
+  `...the rest of your form`;
+});
+const EnhancedFCForm = Form.create<FCFormProps>()(FCForm);
+```
+
+You can use your form component like this：
+
+```tsx
+const TestForm = () => {
+  const formRef = createRef<Ref>();
+  return (
+    <EnhancedFCForm
+      onSubmit={() => console.log(formRef.current!.form.getFieldValue('name'))}
+      wrappedComponentRef={formRef}
+    />
+  );
+};
+```
+
+Online demo:
+
+[![Edit wrappedComponentRef-in-function-component](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/wrappedcomponentref-in-function-component-fj43c?fontsize=14&hidenavigation=1&theme=dark)
+
+<style>
+  .site-form-item-icon {
+    color: rgba(0, 0, 0, 0.25);
+  }
+  [data-theme="dark"] .site-form-item-icon {
+    color: rgba(255,255,255,.3);
+  }
 </style>
